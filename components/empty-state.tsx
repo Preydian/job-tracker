@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 
 export function EmptyState() {
   return (
@@ -9,7 +8,10 @@ export function EmptyState() {
       <p className="mt-1 text-sm text-muted-foreground">
         Start tracking your job applications by adding your first job posting.
       </p>
-      <Link href="/jobs/new" className={buttonVariants({ className: "mt-4" })}>
+      <Link
+        href="/jobs/new"
+        className="mt-4 inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+      >
         Add Your First Job
       </Link>
     </div>

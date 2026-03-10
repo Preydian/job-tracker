@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +25,8 @@ export function DeleteJobButton({ jobId }: { jobId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="destructive" size="sm">
-          Delete
-        </Button>
+      <DialogTrigger className={buttonVariants({ variant: "destructive", size: "sm" })}>
+        Delete
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

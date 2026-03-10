@@ -54,6 +54,9 @@ export function Navbar({ profile }: { profile: Profile | null }) {
               <DropdownMenuItem className="text-sm text-muted-foreground" disabled>
                 {profile?.email}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/bookmarklet")}>
+                Bookmarklet Setup
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>
                 Sign out
               </DropdownMenuItem>

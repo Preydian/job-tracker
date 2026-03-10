@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobStatusBadge } from "@/components/job-status-badge";
@@ -34,7 +36,7 @@ export function JobCard({ job }: { job: Job }) {
             {salary && <span>{salary}</span>}
             {job.experience_years && <span>{job.experience_years} yrs</span>}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground" suppressHydrationWarning>
             Added {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
           </p>
         </CardContent>

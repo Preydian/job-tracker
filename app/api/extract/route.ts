@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { scrapeJobPage } from "@/lib/scraper";
+import { scrapeJobPage, ScrapeError } from "@/lib/scraper";
 import { extractJobInfo } from "@/lib/ai-extract";
 import { z } from "zod";
 
@@ -52,6 +52,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(extracted);
   } catch (error) {
+    if (error instanceof ScrapeError) {
+      return NextResponse.json(
+        { error: error.message, scrapeBlocked: true },
+        { status: 422 }
+      );
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues[0].message },

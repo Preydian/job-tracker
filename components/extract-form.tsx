@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,63 +12,73 @@ interface ExtractFormProps {
 }
 
 export function ExtractForm({ onExtracted }: ExtractFormProps) {
+  const searchParams = useSearchParams();
   const [url, setUrl] = useState("");
   const [manualText, setManualText] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
-  const handleExtract = async () => {
-    setLoading(true);
-    setError(null);
+  const submitExtraction = useCallback(
+    async (submitUrl: string, text?: string) => {
+      setLoading(true);
+      setError(null);
+      setStatus(text ? "Extracting job details..." : "Fetching page...");
+
+      try {
+        const response = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: submitUrl, text }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Extraction failed");
+          if (data.scrapeBlocked) {
+            setShowManual(true);
+          }
+          setStatus(null);
+          return;
+        }
+
+        onExtracted(data, submitUrl);
+      } catch {
+        setError("Something went wrong. Please try again.");
+        setStatus(null);
+      } finally {
+        setLoading(false);
+        setStatus(null);
+      }
+    },
+    [onExtracted]
+  );
+
+  // Check for bookmarklet data on mount
+  useEffect(() => {
+    if (searchParams.get("from") !== "bookmarklet") return;
+
+    const raw = sessionStorage.getItem("bookmarklet_data");
+    if (!raw) return;
+
+    sessionStorage.removeItem("bookmarklet_data");
 
     try {
-      const response = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Extraction failed");
-        return;
-      }
-
-      onExtracted(data, url);
+      const { url: bUrl, text: bText } = JSON.parse(raw);
+      if (bUrl) setUrl(bUrl);
+      submitExtraction(bUrl || "bookmarklet://import", bText);
     } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+      // invalid data, ignore
     }
-  };
+  }, [searchParams, submitExtraction]);
 
-  const handleManualExtract = async () => {
+  const handleExtract = () => submitExtraction(url);
+
+  const handleManualExtract = () => {
     if (!manualText.trim()) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: "manual://input", text: manualText }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Extraction failed");
-        return;
-      }
-
-      onExtracted(data, url || "manual://input");
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    submitExtraction(url || "manual://input", manualText);
   };
 
   return (
@@ -90,6 +101,12 @@ export function ExtractForm({ onExtracted }: ExtractFormProps) {
           </Button>
         </div>
       </div>
+
+      {status && (
+        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+          {status}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
